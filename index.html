@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PDF → Markdown</title>
+  <title>convert2markdown.org</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <style>
@@ -30,7 +30,6 @@
       line-height: 1.6;
     }
 
-    /* Noise texture overlay */
     body::before {
       content: '';
       position: fixed;
@@ -48,9 +47,7 @@
       padding: 48px 24px 80px;
     }
 
-    header {
-      margin-bottom: 48px;
-    }
+    header { margin-bottom: 48px; }
 
     .tag {
       display: inline-block;
@@ -72,9 +69,7 @@
       color: #fff;
     }
 
-    h1 span {
-      color: var(--accent);
-    }
+    h1 span { color: var(--accent); }
 
     .subtitle {
       margin-top: 12px;
@@ -82,48 +77,6 @@
       font-size: 13px;
     }
 
-    /* Settings panel */
-    .settings {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    @media (max-width: 560px) {
-      .settings { grid-template-columns: 1fr; }
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    label {
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    input[type="text"], input[type="password"] {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: var(--mono);
-      font-size: 13px;
-      padding: 10px 12px;
-      outline: none;
-      transition: border-color 0.15s;
-      width: 100%;
-    }
-
-    input:focus {
-      border-color: var(--accent);
-    }
-
-    /* Drop zone */
     .dropzone {
       border: 1px dashed var(--border);
       background: var(--surface);
@@ -155,14 +108,8 @@
       display: block;
     }
 
-    .drop-label {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .drop-label strong {
-      color: var(--accent);
-    }
+    .drop-label { font-size: 13px; color: var(--muted); }
+    .drop-label strong { color: var(--accent); }
 
     .file-name {
       margin-top: 8px;
@@ -170,7 +117,6 @@
       color: var(--accent-dim);
     }
 
-    /* Convert button */
     .btn-convert {
       width: 100%;
       background: var(--accent);
@@ -193,7 +139,6 @@
       cursor: not-allowed;
     }
 
-    /* Status */
     .status {
       margin-top: 16px;
       font-size: 12px;
@@ -219,12 +164,7 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Output */
-    .output-section {
-      margin-top: 40px;
-      display: none;
-    }
-
+    .output-section { margin-top: 40px; display: none; }
     .output-section.visible { display: block; }
 
     .output-header {
@@ -241,10 +181,7 @@
       color: var(--muted);
     }
 
-    .output-actions {
-      display: flex;
-      gap: 8px;
-    }
+    .output-actions { display: flex; gap: 8px; }
 
     .btn-sm {
       background: transparent;
@@ -257,15 +194,8 @@
       transition: border-color 0.15s, color 0.15s;
     }
 
-    .btn-sm:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .btn-sm.copied {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
+    .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-sm.copied { border-color: var(--accent); color: var(--accent); }
 
     .output-box {
       background: var(--surface);
@@ -284,26 +214,14 @@
     .output-box::-webkit-scrollbar-track { background: var(--bg); }
     .output-box::-webkit-scrollbar-thumb { background: var(--border); }
 
-    .meta {
-      margin-top: 8px;
+    .meta { margin-top: 8px; font-size: 11px; color: var(--muted); }
+
+    footer {
+      margin-top: 64px;
       font-size: 11px;
       color: var(--muted);
-    }
-
-    /* Config note */
-    .config-note {
-      margin-top: 48px;
-      padding: 16px;
-      border: 1px solid var(--border);
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.8;
-    }
-
-    .config-note code {
-      color: var(--accent-dim);
-      background: #1a1a1a;
-      padding: 1px 5px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
     }
   </style>
 </head>
@@ -311,21 +229,10 @@
 <div class="container">
 
   <header>
-    <div class="tag">Utility Tool</div>
+    <div class="tag">convert2markdown.org</div>
     <h1>PDF <span>→</span> Markdown</h1>
-    <p class="subtitle">Convert any PDF to clean Markdown using Microsoft MarkItDown</p>
+    <p class="subtitle">Drop any PDF and get clean Markdown back instantly — powered by Microsoft MarkItDown</p>
   </header>
-
-  <div class="settings">
-    <div class="field">
-      <label>API Endpoint</label>
-      <input type="text" id="apiUrl" placeholder="https://your-app.railway.app" />
-    </div>
-    <div class="field">
-      <label>API Key</label>
-      <input type="password" id="apiKey" placeholder="your-secret-key" />
-    </div>
-  </div>
 
   <div class="dropzone" id="dropzone">
     <input type="file" id="fileInput" accept=".pdf" />
@@ -352,42 +259,27 @@
     <div class="meta" id="meta"></div>
   </div>
 
-  <div class="config-note">
-    <strong style="color: var(--text)">Setup:</strong> Enter your Railway API URL and API key above.
-    Settings are saved to <code>localStorage</code> in your browser.
-    Your API key is never sent anywhere except your own Railway endpoint.
-  </div>
+  <footer>
+    convert2markdown.org &mdash; PDF to Markdown conversion
+  </footer>
 
 </div>
 
 <script>
+  // ── CONFIG ──────────────────────────────────────────────
+  const API_URL = 'https://web-production-9e757c.up.railway.app';
+  const API_KEY = 'mk-dist56now'; // change to your actual key
+  // ────────────────────────────────────────────────────────
+
   const $ = id => document.getElementById(id);
-
-  // Persist settings
-  const saved = JSON.parse(localStorage.getItem('markitdown-config') || '{}');
-  if (saved.apiUrl) $('apiUrl').value = saved.apiUrl;
-  if (saved.apiKey) $('apiKey').value = saved.apiKey;
-
-  ['apiUrl', 'apiKey'].forEach(id => {
-    $(id).addEventListener('input', () => {
-      localStorage.setItem('markitdown-config', JSON.stringify({
-        apiUrl: $('apiUrl').value.trim(),
-        apiKey: $('apiKey').value.trim(),
-      }));
-      updateBtn();
-    });
-  });
-
   let selectedFile = null;
 
-  // File input
   $('fileInput').addEventListener('change', e => {
     selectedFile = e.target.files[0] || null;
     $('fileName').textContent = selectedFile ? selectedFile.name : '';
     updateBtn();
   });
 
-  // Drag and drop
   const dz = $('dropzone');
   dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
   dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
@@ -405,8 +297,7 @@
   });
 
   function updateBtn() {
-    const ready = selectedFile && $('apiUrl').value.trim() && $('apiKey').value.trim();
-    $('convertBtn').disabled = !ready;
+    $('convertBtn').disabled = !selectedFile;
   }
 
   function setStatus(msg, type = '') {
@@ -419,10 +310,6 @@
 
   $('convertBtn').addEventListener('click', async () => {
     if (!selectedFile) return;
-
-    const apiUrl = $('apiUrl').value.trim().replace(/\/$/, '');
-    const apiKey = $('apiKey').value.trim();
-
     $('convertBtn').disabled = true;
     $('outputSection').classList.remove('visible');
     setStatus('Converting…', 'loading');
@@ -431,9 +318,9 @@
     form.append('file', selectedFile);
 
     try {
-      const res = await fetch(`${apiUrl}/convert`, {
+      const res = await fetch(`${API_URL}/convert`, {
         method: 'POST',
-        headers: { 'X-API-Key': apiKey },
+        headers: { 'X-API-Key': API_KEY },
         body: form,
       });
 
@@ -447,8 +334,6 @@
       $('meta').textContent = `${data.char_count.toLocaleString()} characters · ${data.filename}`;
       $('outputSection').classList.add('visible');
       setStatus('Conversion complete.', 'success');
-
-      // Store filename for download
       $('downloadBtn').dataset.filename = data.filename.replace(/\.pdf$/i, '.md');
 
     } catch (err) {
@@ -459,10 +344,8 @@
     }
   });
 
-  // Copy
   $('copyBtn').addEventListener('click', async () => {
-    const text = $('outputBox').textContent;
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText($('outputBox').textContent);
     $('copyBtn').textContent = 'Copied!';
     $('copyBtn').classList.add('copied');
     setTimeout(() => {
@@ -471,14 +354,11 @@
     }, 2000);
   });
 
-  // Download
   $('downloadBtn').addEventListener('click', () => {
-    const text = $('outputBox').textContent;
-    const filename = $('downloadBtn').dataset.filename || 'output.md';
-    const blob = new Blob([text], { type: 'text/markdown' });
+    const blob = new Blob([$('outputBox').textContent], { type: 'text/markdown' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = filename;
+    a.download = $('downloadBtn').dataset.filename || 'output.md';
     a.click();
   });
 </script>
