@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF → Markdown</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0e0f;
+      --surface: #161618;
+      --border: #2a2a2e;
+      --accent: #d4f500;
+      --accent-dim: #a8c200;
+      --text: #e8e8e8;
+      --muted: #666;
+      --mono: 'IBM Plex Mono', monospace;
+      --display: 'Syne', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* Noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    header {
+      margin-bottom: 48px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 3px 8px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-family: var(--display);
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .subtitle {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Settings panel */
+    .settings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 560px) {
+      .settings { grid-template-columns: 1fr; }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input[type="text"], input[type="password"] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+    }
+
+    /* Drop zone */
+    .dropzone {
+      border: 1px dashed var(--border);
+      background: var(--surface);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .dropzone:hover, .dropzone.drag-over {
+      border-color: var(--accent);
+      background: #1a1f00;
+    }
+
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .drop-label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .drop-label strong {
+      color: var(--accent);
+    }
+
+    .file-name {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--accent-dim);
+    }
+
+    /* Convert button */
+    .btn-convert {
+      width: 100%;
+      background: var(--accent);
+      color: #000;
+      font-family: var(--display);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      border: none;
+      padding: 16px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn-convert:hover { background: #e8ff00; }
+    .btn-convert:active { transform: scale(0.99); }
+    .btn-convert:disabled {
+      background: var(--border);
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    /* Status */
+    .status {
+      margin-top: 16px;
+      font-size: 12px;
+      min-height: 20px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status.error { color: #ff5f5f; }
+    .status.success { color: var(--accent); }
+
+    .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Output */
+    .output-section {
+      margin-top: 40px;
+      display: none;
+    }
+
+    .output-section.visible { display: block; }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .output-title {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .output-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-sm:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-sm.copied {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .output-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 20px;
+      font-size: 12px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 500px;
+      overflow-y: auto;
+      color: #ccc;
+    }
+
+    .output-box::-webkit-scrollbar { width: 4px; }
+    .output-box::-webkit-scrollbar-track { background: var(--bg); }
+    .output-box::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .meta {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Config note */
+    .config-note {
+      margin-top: 48px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .config-note code {
+      color: var(--accent-dim);
+      background: #1a1a1a;
+      padding: 1px 5px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="tag">Utility Tool</div>
+    <h1>PDF <span>→</span> Markdown</h1>
+    <p class="subtitle">Convert any PDF to clean Markdown using Microsoft MarkItDown</p>
+  </header>
+
+  <div class="settings">
+    <div class="field">
+      <label>API Endpoint</label>
+      <input type="text" id="apiUrl" placeholder="https://your-app.railway.app" />
+    </div>
+    <div class="field">
+      <label>API Key</label>
+      <input type="password" id="apiKey" placeholder="your-secret-key" />
+    </div>
+  </div>
+
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="fileInput" accept=".pdf" />
+    <span class="drop-icon">⬆</span>
+    <div class="drop-label">
+      <strong>Click to select</strong> or drag & drop a PDF
+    </div>
+    <div class="file-name" id="fileName"></div>
+  </div>
+
+  <button class="btn-convert" id="convertBtn" disabled>Convert to Markdown</button>
+
+  <div class="status" id="status"></div>
+
+  <div class="output-section" id="outputSection">
+    <div class="output-header">
+      <div class="output-title">Markdown Output</div>
+      <div class="output-actions">
+        <button class="btn-sm" id="copyBtn">Copy</button>
+        <button class="btn-sm" id="downloadBtn">Download .md</button>
+      </div>
+    </div>
+    <div class="output-box" id="outputBox"></div>
+    <div class="meta" id="meta"></div>
+  </div>
+
+  <div class="config-note">
+    <strong style="color: var(--text)">Setup:</strong> Enter your Railway API URL and API key above.
+    Settings are saved to <code>localStorage</code> in your browser.
+    Your API key is never sent anywhere except your own Railway endpoint.
+  </div>
+
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  // Persist settings
+  const saved = JSON.parse(localStorage.getItem('markitdown-config') || '{}');
+  if (saved.apiUrl) $('apiUrl').value = saved.apiUrl;
+  if (saved.apiKey) $('apiKey').value = saved.apiKey;
+
+  ['apiUrl', 'apiKey'].forEach(id => {
+    $(id).addEventListener('input', () => {
+      localStorage.setItem('markitdown-config', JSON.stringify({
+        apiUrl: $('apiUrl').value.trim(),
+        apiKey: $('apiKey').value.trim(),
+      }));
+      updateBtn();
+    });
+  });
+
+  let selectedFile = null;
+
+  // File input
+  $('fileInput').addEventListener('change', e => {
+    selectedFile = e.target.files[0] || null;
+    $('fileName').textContent = selectedFile ? selectedFile.name : '';
+    updateBtn();
+  });
+
+  // Drag and drop
+  const dz = $('dropzone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.toLowerCase().endsWith('.pdf')) {
+      selectedFile = file;
+      $('fileName').textContent = file.name;
+      updateBtn();
+    } else {
+      setStatus('Only PDF files are supported.', 'error');
+    }
+  });
+
+  function updateBtn() {
+    const ready = selectedFile && $('apiUrl').value.trim() && $('apiKey').value.trim();
+    $('convertBtn').disabled = !ready;
+  }
+
+  function setStatus(msg, type = '') {
+    const el = $('status');
+    el.className = 'status ' + type;
+    el.innerHTML = type === 'loading'
+      ? `<div class="spinner"></div><span>${msg}</span>`
+      : msg;
+  }
+
+  $('convertBtn').addEventListener('click', async () => {
+    if (!selectedFile) return;
+
+    const apiUrl = $('apiUrl').value.trim().replace(/\/$/, '');
+    const apiKey = $('apiKey').value.trim();
+
+    $('convertBtn').disabled = true;
+    $('outputSection').classList.remove('visible');
+    setStatus('Converting…', 'loading');
+
+    const form = new FormData();
+    form.append('file', selectedFile);
+
+    try {
+      const res = await fetch(`${apiUrl}/convert`, {
+        method: 'POST',
+        headers: { 'X-API-Key': apiKey },
+        body: form,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      $('outputBox').textContent = data.markdown;
+      $('meta').textContent = `${data.char_count.toLocaleString()} characters · ${data.filename}`;
+      $('outputSection').classList.add('visible');
+      setStatus('Conversion complete.', 'success');
+
+      // Store filename for download
+      $('downloadBtn').dataset.filename = data.filename.replace(/\.pdf$/i, '.md');
+
+    } catch (err) {
+      setStatus(`Error: ${err.message}`, 'error');
+    } finally {
+      $('convertBtn').disabled = false;
+      updateBtn();
+    }
+  });
+
+  // Copy
+  $('copyBtn').addEventListener('click', async () => {
+    const text = $('outputBox').textContent;
+    await navigator.clipboard.writeText(text);
+    $('copyBtn').textContent = 'Copied!';
+    $('copyBtn').classList.add('copied');
+    setTimeout(() => {
+      $('copyBtn').textContent = 'Copy';
+      $('copyBtn').classList.remove('copied');
+    }, 2000);
+  });
+
+  // Download
+  $('downloadBtn').addEventListener('click', () => {
+    const text = $('outputBox').textContent;
+    const filename = $('downloadBtn').dataset.filename || 'output.md';
+    const blob = new Blob([text], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+  });
+</script>
+</body>
+</html>
